@@ -1,12 +1,28 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  template: `
+    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-100 gap-4">
+      <h1 class="text-4xl font-bold text-gray-800">Hello {{ name }}</h1>
+
+      <p class="text-lg text-gray-600">You have {{ applications }} applications.</p>
+
+      <button (click)="increaseApplications()"
+        class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow hover:bg-indigo-700 transition-colors">
+        Add Application
+      </button>
+    </div>
+  `
 })
-export class App {
-  protected readonly title = signal('angular-project');
+export class AppComponent {
+
+  // Logic / data
+  name = 'Alex';
+  applications = 5;
+
+  // Logic / function
+  increaseApplications() {
+    this.applications++;
+  }
 }
