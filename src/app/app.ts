@@ -7,9 +7,11 @@ import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
   templateUrl: './app.html',
 })
 export class AppComponent {
-  // exact:true for the home link so it isn't marked active on every route.
+  // exact:true only for the home link ('/' is a prefix of every route).
   navItems = [
     { path: '/', label: 'Dashboard', exact: true },
     { path: '/applications', label: 'Applications', exact: false },
+    { path: '/addapplication', label: 'Add Application', exact: false },
+    { path: '/settings', label: 'Settings', exact: false },
   ];
 }

@@ -1,11 +1,20 @@
 import { Component, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
+  imports: [RouterLink],
   template: `
-    <h1 class="text-2xl font-bold text-slate-900 mb-1">Applications</h1>
+    <div class="flex items-center justify-between mb-1">
+      <h1 class="text-2xl font-bold text-slate-900">Applications</h1>
+      <a
+        routerLink="/addapplication"
+        class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700"
+        >+ New Application</a
+      >
+    </div>
     <p class="text-slate-500 mb-6">
       {{ appService.filteredApplications().length }} of {{ appService.applications().length }} applications
     </p>

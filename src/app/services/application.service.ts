@@ -111,6 +111,12 @@ export class ApplicationService {
     this._page.update((p) => Math.max(p - 1, 1));
   }
 
+  // Adds a new application to the top of the list (mock create until the API).
+  addApplication(data: Omit<Application, 'id'>): void {
+    const nextId = Math.max(0, ...this._applications().map((a) => a.id)) + 1;
+    this._applications.update((list) => [{ ...data, id: nextId }, ...list]);
+  }
+
   constructor() {
     // Read the signal by calling it — logs the current list to the console.
     console.log(this._applications());
