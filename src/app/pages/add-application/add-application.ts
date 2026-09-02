@@ -1,125 +1,193 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { ApplicationService } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-add-application',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule],
   template: `
-    <a routerLink="/applications" class="text-sm text-indigo-600 hover:underline">← Back</a>
-    <h1 class="text-2xl font-bold text-slate-900 mt-2 mb-6">New Application</h1>
-
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="max-w-2xl space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Company</label>
-        <input
-          formControlName="company"
-          class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        @if (form.controls.company.touched && form.controls.company.invalid) {
-          <p class="text-xs text-red-500 mt-1">Company is required.</p>
-        }
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      class="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
+    >
+      <!-- Header -->
+      <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-900">New Application</h1>
+        <p class="mt-2 text-sm text-slate-500">Track a job you've applied to or plan to apply for.</p>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Role</label>
-        <input
-          formControlName="role"
-          class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        @if (form.controls.role.touched && form.controls.role.invalid) {
-          <p class="text-xs text-red-500 mt-1">Role is required.</p>
-        }
-      </div>
+      <!-- Job Information -->
+      <section class="mb-8">
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Job Information</h2>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Location</label>
-        <input
-          formControlName="location"
-          class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-        @if (form.controls.location.touched && form.controls.location.invalid) {
-          <p class="text-xs text-red-500 mt-1">Location is required.</p>
-        }
-      </div>
+        <div class="grid gap-5 md:grid-cols-2">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Company Name *</label>
+            <input
+              type="text"
+              formControlName="company"
+              placeholder="e.g. Stripe"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+            @if (form.controls.company.touched && form.controls.company.invalid) {
+              <p class="mt-1 text-sm text-red-600">Company Name is required</p>
+            }
+          </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Job type</label>
-          <select
-            formControlName="jobType"
-            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="full-time">Full-time</option>
-            <option value="part-time">Part-time</option>
-            <option value="remote">Remote</option>
-            <option value="contract">Contract</option>
-            <option value="freelance">Freelance</option>
-            <option value="internship">Internship</option>
-          </select>
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Job Title *</label>
+            <input
+              type="text"
+              formControlName="role"
+              placeholder="e.g. Frontend Engineer"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+            @if (form.controls.role.touched && form.controls.role.invalid) {
+              <p class="mt-1 text-sm text-red-600">Job Title is required</p>
+            }
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Location *</label>
+            <input
+              type="text"
+              formControlName="location"
+              placeholder="e.g. Kathmandu, Nepal"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+            @if (form.controls.location.touched && form.controls.location.invalid) {
+              <p class="mt-1 text-sm text-red-600">Location is required</p>
+            }
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Job Type *</label>
+            <select
+              formControlName="jobType"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            >
+              <option value="">Select job type</option>
+              <option value="full-time">Full-time</option>
+              <option value="part-time">Part-time</option>
+              <option value="remote">Remote</option>
+              <option value="contract">Contract</option>
+              <option value="freelance">Freelance</option>
+              <option value="internship">Internship</option>
+            </select>
+            @if (form.controls.jobType.touched && form.controls.jobType.invalid) {
+              <p class="mt-1 text-sm text-red-600">Job Type is required</p>
+            }
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Salary Range</label>
+            <input
+              type="text"
+              formControlName="salary"
+              placeholder="e.g. NPR 80k - 120k"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Source</label>
+            <input
+              type="text"
+              formControlName="source"
+              placeholder="LinkedIn, Referral..."
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+          </div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-          <select
-            formControlName="status"
-            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="applied">Applied</option>
-            <option value="interview">Interview</option>
-            <option value="offer">Offer</option>
-            <option value="rejected">Rejected</option>
-            <option value="follow-up">Follow-up</option>
-          </select>
-        </div>
-      </div>
+      </section>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Date applied</label>
-          <input
-            type="date"
-            formControlName="dateApplied"
-            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-          @if (form.controls.dateApplied.touched && form.controls.dateApplied.invalid) {
-            <p class="text-xs text-red-500 mt-1">Date is required.</p>
+      <!-- Status & Dates -->
+      <section class="mb-8">
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Status & Dates</h2>
+
+        <div class="grid gap-5 md:grid-cols-2">
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Status *</label>
+            <select
+              formControlName="status"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            >
+              <option value="applied">Applied</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+              <option value="rejected">Rejected</option>
+              <option value="follow-up">Follow-up</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Date Applied *</label>
+            <input
+              type="date"
+              formControlName="dateApplied"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+            @if (form.controls.dateApplied.touched && form.controls.dateApplied.invalid) {
+              <p class="mt-1 text-sm text-red-600">Date Applied is required</p>
+            }
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-medium text-slate-700">Follow-up Date</label>
+            <input
+              type="date"
+              formControlName="followUpDate"
+              class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+            />
+          </div>
+
+          @if (form.controls.status.value === 'interview') {
+            <div>
+              <label class="mb-2 block text-sm font-medium text-slate-700">Interview Date</label>
+              <input
+                type="date"
+                formControlName="interviewDate"
+                class="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+              />
+              <p class="mt-1 text-xs text-slate-400">Shown in Upcoming Interviews on your dashboard.</p>
+            </div>
           }
         </div>
+      </section>
+
+      <!-- Notes -->
+      <section class="mb-8">
+        <h2 class="mb-4 text-lg font-semibold text-slate-900">Notes</h2>
+
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Salary (optional)</label>
-          <input
-            formControlName="salary"
-            placeholder="$120k"
-            class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <label class="mb-2 block text-sm font-medium text-slate-700">Application Notes</label>
+          <textarea
+            formControlName="notes"
+            rows="5"
+            placeholder="Add any notes about this application..."
+            class="w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-800 outline-none transition focus:border-indigo-500"
+          ></textarea>
         </div>
-      </div>
+      </section>
 
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Notes (optional)</label>
-        <textarea
-          formControlName="notes"
-          rows="3"
-          class="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        ></textarea>
-      </div>
-
-      <div class="flex gap-3 pt-2">
+      <!-- Actions -->
+      <div class="flex justify-end gap-3 border-t border-slate-200 pt-6">
+        <button
+          type="button"
+          (click)="clearForm()"
+          class="cursor-pointer rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Clear Form
+        </button>
         <button
           type="submit"
-          [disabled]="form.invalid"
-          class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed"
+          class="cursor-pointer rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white transition hover:bg-indigo-700"
         >
-          Save application
+          Save Application
         </button>
-        <a
-          routerLink="/applications"
-          class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-        >
-          Cancel
-        </a>
       </div>
     </form>
   `,
@@ -136,8 +204,11 @@ export class AddApplicationComponent {
     location: ['', Validators.required],
     jobType: ['full-time' as JobType, Validators.required],
     status: ['applied' as ApplicationStatus, Validators.required],
-    dateApplied: ['', Validators.required],
+    dateApplied: [new Date().toISOString().split('T')[0], Validators.required],
     salary: [''],
+    source: [''],
+    followUpDate: [''],
+    interviewDate: [''],
     notes: [''],
   });
 
@@ -150,8 +221,15 @@ export class AddApplicationComponent {
     this.appService.addApplication({
       ...value,
       salary: value.salary || undefined,
+      source: value.source || undefined,
+      followUpDate: value.followUpDate || undefined,
+      interviewDate: value.interviewDate || undefined,
       notes: value.notes || undefined,
     });
     this.router.navigate(['/applications']);
+  }
+
+  clearForm(): void {
+    this.form.reset();
   }
 }

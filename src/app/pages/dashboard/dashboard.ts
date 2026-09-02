@@ -7,6 +7,7 @@ import { Component } from '@angular/core';
   template: `
     <h1 class="text-2xl font-bold text-slate-900">Dashboard</h1>
     <p class="text-slate-500">This page is rendered by the router.</p>
+    
   `,
 })
 export class DashboardComponent {}

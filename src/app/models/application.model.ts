@@ -17,6 +17,9 @@ export interface Application {
   jobType: JobType;
   status: ApplicationStatus;
   dateApplied: string; // ISO date
+  followUpDate?: string;
+  interviewDate?: string;
   salary?: string;
+  source?: string;
   notes?: string;
 }
