@@ -1,5 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { Application, ApplicationStatus } from '../models/application.model';
+import { Application, ApplicationStatus, JobType } from '../models/application.model';
 import { MOCK_APPLICATIONS } from '../data/mock-applications';
 
 // The three ways the list can be ordered.
@@ -23,21 +23,27 @@ export class ApplicationService {
   private readonly _statusFilter = signal<'all' | ApplicationStatus>('all');
   readonly statusFilter = this._statusFilter.asReadonly();
 
+  // The current job-type filter — "all" or a specific job type.
+  private readonly _typeFilter = signal<'all' | JobType>('all');
+  readonly typeFilter = this._typeFilter.asReadonly();
+
   // The current sort order.
   private readonly _sort = signal<SortOption>('date-desc');
   readonly sort = this._sort.asReadonly();
 
-  // Derived list: recomputes whenever the data, the search, OR the status changes.
+  // Derived list: recomputes whenever the data, search, status, OR type changes.
   readonly filteredApplications = computed(() => {
     const term = this._search().toLowerCase().trim();
     const status = this._statusFilter();
+    const type = this._typeFilter();
     return this._applications().filter((app) => {
       const matchesSearch =
         !term ||
         app.company.toLowerCase().includes(term) ||
         app.role.toLowerCase().includes(term);
       const matchesStatus = status === 'all' || app.status === status;
-      return matchesSearch && matchesStatus;
+      const matchesType = type === 'all' || app.jobType === type;
+      return matchesSearch && matchesStatus && matchesType;
     });
   });
 
@@ -65,6 +71,10 @@ export class ApplicationService {
 
   setStatusFilter(status: 'all' | ApplicationStatus): void {
     this._statusFilter.set(status);
+  }
+
+  setTypeFilter(type: 'all' | JobType): void {
+    this._typeFilter.set(type);
   }
 
   setSort(option: SortOption): void {

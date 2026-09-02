@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ApplicationService, SortOption } from '../../services/application.service';
-import { ApplicationStatus } from '../../models/application.model';
+import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
@@ -29,6 +29,19 @@ import { ApplicationStatus } from '../../models/application.model';
         <option value="offer">Offer</option>
         <option value="rejected">Rejected</option>
         <option value="follow-up">Follow-up</option>
+      </select>
+      <select
+        [value]="appService.typeFilter()"
+        (change)="onTypeChange($event)"
+        class="px-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option value="all">All types</option>
+        <option value="full-time">Full-time</option>
+        <option value="part-time">Part-time</option>
+        <option value="remote">Remote</option>
+        <option value="contract">Contract</option>
+        <option value="freelance">Freelance</option>
+        <option value="internship">Internship</option>
       </select>
       <select
         [value]="appService.sort()"
@@ -71,6 +84,12 @@ export class ApplicationsComponent {
   onStatusChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as 'all' | ApplicationStatus;
     this.appService.setStatusFilter(value);
+  }
+
+  // Reads the selected job type and pushes it into the service's type-filter signal.
+  onTypeChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as 'all' | JobType;
+    this.appService.setTypeFilter(value);
   }
 
   // Reads the selected sort option and pushes it into the service's sort signal.
