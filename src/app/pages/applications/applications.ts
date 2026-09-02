@@ -1,23 +1,30 @@
 import { Component, inject } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { LucideMapPin, LucidePencil, LucideTrash2, LucidePlus } from '@lucide/angular';
 import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
-  imports: [RouterLink],
+  imports: [RouterLink, DatePipe, LucideMapPin, LucidePencil, LucideTrash2, LucidePlus],
   template: `
-    <div class="flex items-center justify-between mb-1">
-      <h1 class="text-2xl font-bold text-slate-900">Applications</h1>
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">All Applications</h1>
+        <p class="mt-1 text-sm text-slate-500">
+          {{ appService.filteredApplications().length }} of
+          {{ appService.applications().length }} applications
+        </p>
+      </div>
       <a
         routerLink="/addapplication"
-        class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700"
-        >+ New Application</a
+        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
       >
+        <svg lucidePlus class="h-4 w-4"></svg>
+        Add New
+      </a>
     </div>
-    <p class="text-slate-500 mb-6">
-      {{ appService.filteredApplications().length }} of {{ appService.applications().length }} applications
-    </p>
 
     <div class="flex flex-col sm:flex-row gap-3 mb-6">
       <input
@@ -63,33 +70,84 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
       </select>
     </div>
 
-    <div class="space-y-3">
-      @for (app of appService.pagedApplications(); track app.id) {
-        <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-4">
-          <div>
-            <p class="font-semibold text-slate-900">{{ app.role }}</p>
-            <p class="text-sm text-slate-500">{{ app.company }} · {{ app.location }}</p>
+    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <div class="min-w-205">
+          <!-- Header row -->
+          <div
+            class="grid grid-cols-[2.2fr_1.8fr_1.2fr_1.6fr_1fr_1fr_88px] gap-4 border-b border-slate-100 bg-slate-50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500"
+          >
+            <span>Company</span>
+            <span>Role</span>
+            <span>Status</span>
+            <span>Location</span>
+            <span>Applied</span>
+            <span>Follow-up</span>
+            <span class="text-right">Actions</span>
           </div>
-          <div class="flex items-center gap-3">
-            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
-              {{ app.status }}
-            </span>
-            <a
-              [routerLink]="['/addapplication', app.id]"
-              class="text-sm font-medium text-indigo-600 hover:underline"
-              >Edit</a
-            >
-            <button
-              (click)="onDelete(app.id)"
-              class="text-sm font-medium text-red-600 hover:underline"
-            >
-              Delete
-            </button>
+
+          <div class="divide-y divide-slate-100">
+            @for (app of appService.pagedApplications(); track app.id) {
+              <div
+                class="grid grid-cols-[2.2fr_1.8fr_1.2fr_1.6fr_1fr_1fr_88px] items-center gap-4 px-6 py-4"
+              >
+                <div class="flex min-w-0 items-center gap-3">
+                  <div
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold text-white"
+                    [class]="avatarColor(app.company)"
+                  >
+                    {{ app.company.charAt(0).toUpperCase() }}
+                  </div>
+                  <div class="min-w-0">
+                    <p class="truncate font-semibold text-slate-900">{{ app.company }}</p>
+                    <p class="text-sm capitalize text-slate-500">{{ app.jobType }}</p>
+                  </div>
+                </div>
+                <div class="min-w-0">
+                  <p class="truncate font-semibold text-slate-900">{{ app.role }}</p>
+                  <p class="text-sm text-slate-500">{{ app.salary || '-' }}</p>
+                </div>
+                <div>
+                  <span
+                    class="inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1"
+                    [class]="statusBadge(app.status)"
+                  >
+                    {{ app.status }}
+                  </span>
+                </div>
+                <div class="flex min-w-0 items-center gap-2 text-sm text-slate-500">
+                  <svg lucideMapPin class="h-4 w-4 shrink-0 text-slate-400"></svg>
+                  <span class="truncate">{{ app.location }}</span>
+                </div>
+                <div class="text-sm text-slate-500">{{ app.dateApplied | date: 'MMM d' }}</div>
+                <div class="text-sm text-amber-600">
+                  {{ app.followUpDate ? (app.followUpDate | date: 'MMM d') : '-' }}
+                </div>
+                <div class="flex items-center justify-end gap-1 text-slate-400">
+                  <a
+                    [routerLink]="['/addapplication', app.id]"
+                    class="rounded-lg p-1.5 transition hover:bg-slate-100 hover:text-slate-600"
+                    aria-label="Edit"
+                  >
+                    <svg lucidePencil class="h-4 w-4"></svg>
+                  </a>
+                  <button
+                    (click)="onDelete(app.id)"
+                    class="rounded-lg p-1.5 transition hover:bg-slate-100 hover:text-red-500"
+                    aria-label="Delete"
+                  >
+                    <svg lucideTrash2 class="h-4 w-4"></svg>
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="px-6 py-12 text-center text-slate-400">
+                No applications match your search.
+              </div>
+            }
           </div>
         </div>
-      } @empty {
-        <div class="text-center py-12 text-slate-400">No applications match your search.</div>
-      }
+      </div>
     </div>
 
     <div class="flex items-center justify-between mt-6">
@@ -144,6 +202,39 @@ export class ApplicationsComponent {
   onDelete(id: number): void {
     if (confirm('Delete this application?')) {
       this.appService.deleteApplication(id);
+    }
+  }
+
+  // Deterministic avatar colour per company (first-letter badge).
+  avatarColor(company: string): string {
+    const palette = [
+      'bg-indigo-500',
+      'bg-violet-500',
+      'bg-sky-500',
+      'bg-emerald-500',
+      'bg-amber-500',
+      'bg-orange-500',
+      'bg-rose-500',
+      'bg-slate-900',
+    ];
+    let hash = 0;
+    for (const ch of company) hash += ch.charCodeAt(0);
+    return palette[hash % palette.length];
+  }
+
+  // Pill colours per application status (matches ApplyTrack).
+  statusBadge(status: string): string {
+    switch (status) {
+      case 'applied':
+        return 'bg-blue-50 text-blue-600 ring-blue-100';
+      case 'interview':
+        return 'bg-purple-50 text-purple-600 ring-purple-100';
+      case 'offer':
+        return 'bg-emerald-50 text-emerald-600 ring-emerald-100';
+      case 'rejected':
+        return 'bg-red-50 text-red-600 ring-red-100';
+      default:
+        return 'bg-amber-50 text-amber-600 ring-amber-100';
     }
   }
 
