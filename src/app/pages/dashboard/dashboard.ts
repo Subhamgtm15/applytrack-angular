@@ -1,13 +1,28 @@
 import { Component, computed, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { NgxChartsModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { LucideHandshake, LucideClock3 } from '@lucide/angular';
+import {
+  LucideHandshake,
+  LucideClock3,
+  LucideChevronRight,
+  LucidePlus,
+} from '@lucide/angular';
 import { ApplicationService } from '../../services/application.service';
 import { StatCardComponent } from '../../components/stat-card/stat-card';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [StatCardComponent, NgxChartsModule, LucideHandshake, LucideClock3, DatePipe],
+  imports: [
+    StatCardComponent,
+    NgxChartsModule,
+    RouterLink,
+    DatePipe,
+    LucideHandshake,
+    LucideClock3,
+    LucideChevronRight,
+    LucidePlus,
+  ],
   template: `
     <div class="mb-6">
       <h1 class="text-2xl font-bold text-slate-900">Good to see you, Subham</h1>
@@ -113,6 +128,76 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
         </div>
       </div>
     </div>
+
+    <!-- Recent applications -->
+    <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Recent Applications</h2>
+          <p class="mt-1 text-sm text-slate-500">
+            Newest applications first, sorted by the dateApplied field
+          </p>
+        </div>
+        <a
+          routerLink="/applications"
+          class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        >
+          View all
+          <svg lucideChevronRight class="h-4 w-4"></svg>
+        </a>
+      </div>
+
+      <div class="divide-y divide-slate-100">
+        @for (app of appService.recentApplications(); track app.id) {
+          <a
+            [routerLink]="['/addapplication', app.id]"
+            class="-mx-2 flex items-center gap-4 rounded-lg px-2 py-3 transition-colors hover:bg-slate-50"
+          >
+            <div
+              class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-semibold text-white"
+              [class]="avatarColor(app.company)"
+            >
+              {{ app.company.charAt(0).toUpperCase() }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-semibold text-slate-900">{{ app.company }}</p>
+              <p class="truncate text-sm text-slate-500">
+                {{ app.role }} <span class="text-slate-300">/</span> {{ app.location }}
+              </p>
+            </div>
+            <span
+              class="shrink-0 rounded-full border px-3 py-1 text-xs font-medium capitalize"
+              [class]="statusBadge(app.status)"
+            >
+              {{ app.status }}
+            </span>
+            <span class="hidden w-24 shrink-0 text-right text-sm text-slate-500 sm:block">
+              {{ app.dateApplied | date: 'MMM d, y' }}
+            </span>
+            <svg lucideChevronRight class="h-4 w-4 shrink-0 text-slate-400"></svg>
+          </a>
+        } @empty {
+          <p class="py-6 text-sm text-slate-400">No applications yet.</p>
+        }
+      </div>
+    </div>
+
+    <!-- CTA banner -->
+    <div
+      class="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-5"
+    >
+      <div>
+        <h3 class="font-semibold text-slate-900">Ready to track a new application?</h3>
+        <p class="text-sm text-slate-500">Log your latest job application in under a minute.</p>
+      </div>
+      <a
+        routerLink="/addapplication"
+        class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700"
+      >
+        <svg lucidePlus class="h-4 w-4"></svg>
+        Add Application
+      </a>
+    </div>
   `,
 })
 export class DashboardComponent {
@@ -130,4 +215,36 @@ export class DashboardComponent {
     group: ScaleType.Ordinal,
     domain: ['#8b5cf6'],
   };
+
+  // Deterministic avatar colour per company (first-letter badge).
+  avatarColor(company: string): string {
+    const palette = [
+      'bg-indigo-500',
+      'bg-blue-500',
+      'bg-orange-500',
+      'bg-purple-500',
+      'bg-emerald-500',
+      'bg-pink-500',
+      'bg-cyan-500',
+    ];
+    let hash = 0;
+    for (const ch of company) hash += ch.charCodeAt(0);
+    return palette[hash % palette.length];
+  }
+
+  // Pill colours per application status.
+  statusBadge(status: string): string {
+    switch (status) {
+      case 'applied':
+        return 'text-blue-600 bg-blue-50 border-blue-200';
+      case 'interview':
+        return 'text-purple-600 bg-purple-50 border-purple-200';
+      case 'offer':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'rejected':
+        return 'text-red-600 bg-red-50 border-red-200';
+      default:
+        return 'text-amber-600 bg-amber-50 border-amber-200';
+    }
+  }
 }
