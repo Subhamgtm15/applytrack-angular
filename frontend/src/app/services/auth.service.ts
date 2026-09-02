@@ -13,6 +13,36 @@ interface UserResponse {
   user: { fullName: string; email: string };
 }
 
+// The full editable profile (settings page) from /auth/me.
+export interface UserProfile {
+  fullName: string;
+  email: string;
+  currentPosition: string;
+  targetPosition: string;
+  linkedin: string;
+}
+
+// Raw /auth/me payload with the extra profile columns (snake_case).
+interface ProfileResponse {
+  user: {
+    fullName: string;
+    email: string;
+    current_position: string | null;
+    target_position: string | null;
+    linkedin: string | null;
+  };
+}
+
+function toProfile(u: ProfileResponse['user']): UserProfile {
+  return {
+    fullName: u.fullName,
+    email: u.email,
+    currentPosition: u.current_position ?? '',
+    targetPosition: u.target_position ?? '',
+    linkedin: u.linkedin ?? '',
+  };
+}
+
 // Shared auth state — the Angular equivalent of ApplyTrack's Zustand authStore.
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -55,6 +85,27 @@ export class AuthService {
     return this.http.get<UserResponse>(`${API_BASE_URL}/auth/me`).pipe(
       map((res) => ({ fullName: res.user.fullName, email: res.user.email })),
       tap((user) => this._user.set(user)),
+    );
+  }
+
+  // GET /auth/me — the full profile for the settings page.
+  getProfile(): Observable<UserProfile> {
+    return this.http
+      .get<ProfileResponse>(`${API_BASE_URL}/auth/me`)
+      .pipe(map((res) => toProfile(res.user)));
+  }
+
+  // PUT /auth/me — save the profile, then refresh the user signal so the name
+  // updates everywhere (sidebar + dashboard greeting).
+  updateProfile(data: {
+    fullName: string;
+    currentPosition: string;
+    targetPosition: string;
+    linkedin: string;
+  }): Observable<UserProfile> {
+    return this.http.put<ProfileResponse>(`${API_BASE_URL}/auth/me`, data).pipe(
+      map((res) => toProfile(res.user)),
+      tap((profile) => this._user.set({ fullName: profile.fullName, email: profile.email })),
     );
   }
 }
