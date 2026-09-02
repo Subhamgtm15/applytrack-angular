@@ -9,5 +9,6 @@ export const routes: Routes = [
   { path: '', component: DashboardComponent },
   { path: 'applications', component: ApplicationsComponent },
   { path: 'addapplication', component: AddApplicationComponent },
+  { path: 'addapplication/:id', component: AddApplicationComponent },
   { path: 'settings', component: SettingsComponent },
 ];

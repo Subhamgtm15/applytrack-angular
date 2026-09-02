@@ -117,6 +117,18 @@ export class ApplicationService {
     this._applications.update((list) => [{ ...data, id: nextId }, ...list]);
   }
 
+  // Looks up a single application by id (for the edit form to prefill).
+  getById(id: number): Application | undefined {
+    return this._applications().find((a) => a.id === id);
+  }
+
+  // Replaces an existing application with updated data.
+  updateApplication(id: number, data: Omit<Application, 'id'>): void {
+    this._applications.update((list) =>
+      list.map((a) => (a.id === id ? { ...data, id } : a)),
+    );
+  }
+
   constructor() {
     // Read the signal by calling it — logs the current list to the console.
     console.log(this._applications());

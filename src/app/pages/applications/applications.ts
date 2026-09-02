@@ -70,9 +70,16 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
             <p class="font-semibold text-slate-900">{{ app.role }}</p>
             <p class="text-sm text-slate-500">{{ app.company }} · {{ app.location }}</p>
           </div>
-          <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
-            {{ app.status }}
-          </span>
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-slate-100 text-slate-700">
+              {{ app.status }}
+            </span>
+            <a
+              [routerLink]="['/addapplication', app.id]"
+              class="text-sm font-medium text-indigo-600 hover:underline"
+              >Edit</a
+            >
+          </div>
         </div>
       } @empty {
         <div class="text-center py-12 text-slate-400">No applications match your search.</div>

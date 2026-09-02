@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ApplicationService } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
@@ -15,7 +15,9 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
     >
       <!-- Header -->
       <div class="mb-8">
-        <h1 class="text-2xl font-bold text-slate-900">New Application</h1>
+        <h1 class="text-2xl font-bold text-slate-900">
+          {{ isEdit ? 'Edit Application' : 'New Application' }}
+        </h1>
         <p class="mt-2 text-sm text-slate-500">Track a job you've applied to or plan to apply for.</p>
       </div>
 
@@ -180,13 +182,13 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
           (click)="clearForm()"
           class="cursor-pointer rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50"
         >
-          Clear Form
+          {{ isEdit ? 'Reset Form' : 'Clear Form' }}
         </button>
         <button
           type="submit"
           class="cursor-pointer rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white transition hover:bg-indigo-700"
         >
-          Save Application
+          {{ isEdit ? 'Update Application' : 'Save Application' }}
         </button>
       </div>
     </form>
@@ -196,6 +198,11 @@ export class AddApplicationComponent {
   private readonly fb = inject(FormBuilder);
   private readonly appService = inject(ApplicationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  // Present only on the edit route (/addapplication/:id) — drives add-vs-edit mode.
+  private readonly editId = this.route.snapshot.paramMap.get('id');
+  readonly isEdit = this.editId !== null;
 
   // The form's shape + rules, defined in TS. nonNullable → controls are plain strings.
   readonly form = this.fb.nonNullable.group({
@@ -212,20 +219,48 @@ export class AddApplicationComponent {
     notes: [''],
   });
 
+  constructor() {
+    // Edit mode: load the existing application and prefill the form.
+    if (this.editId) {
+      const existing = this.appService.getById(Number(this.editId));
+      if (existing) {
+        this.form.patchValue({
+          company: existing.company,
+          role: existing.role,
+          location: existing.location,
+          jobType: existing.jobType,
+          status: existing.status,
+          dateApplied: existing.dateApplied,
+          salary: existing.salary ?? '',
+          source: existing.source ?? '',
+          followUpDate: existing.followUpDate ?? '',
+          interviewDate: existing.interviewDate ?? '',
+          notes: existing.notes ?? '',
+        });
+      }
+    }
+  }
+
   onSubmit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched(); // reveal all validation messages
       return;
     }
     const value = this.form.getRawValue();
-    this.appService.addApplication({
+    const data = {
       ...value,
       salary: value.salary || undefined,
       source: value.source || undefined,
       followUpDate: value.followUpDate || undefined,
       interviewDate: value.interviewDate || undefined,
       notes: value.notes || undefined,
-    });
+    };
+
+    if (this.editId) {
+      this.appService.updateApplication(Number(this.editId), data);
+    } else {
+      this.appService.addApplication(data);
+    }
     this.router.navigate(['/applications']);
   }
 
