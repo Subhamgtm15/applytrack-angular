@@ -5,6 +5,7 @@ import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { LucideMapPin, LucidePencil, LucideTrash2, LucidePlus } from '@lucide/angular';
+import { StatusColorDirective } from '../../directives/status-color.directive';
 import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
@@ -14,6 +15,7 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
     RouterLink,
     ReactiveFormsModule,
     DatePipe,
+    StatusColorDirective,
     LucideMapPin,
     LucidePencil,
     LucideTrash2,
@@ -118,12 +120,7 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
                   <p class="text-sm text-slate-500">{{ app.salary || '-' }}</p>
                 </div>
                 <div>
-                  <span
-                    class="inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1"
-                    [class]="statusBadge(app.status)"
-                  >
-                    {{ app.status }}
-                  </span>
+                  <span [appStatusColor]="app.status">{{ app.status }}</span>
                 </div>
                 <div class="flex min-w-0 items-center gap-2 text-sm text-slate-500">
                   <svg lucideMapPin class="h-4 w-4 shrink-0 text-slate-400"></svg>
@@ -195,6 +192,7 @@ export class ApplicationsComponent {
   readonly searchControl = new FormControl('', { nonNullable: true });
 
   constructor() {
+    console.log(this.appService.applications());
     // Type-ahead pipeline: wait for a 300ms pause, skip duplicate terms, then
     // switchMap to the latest server request — cancelling any in-flight one.
     this.searchControl.valueChanges
@@ -247,25 +245,5 @@ export class ApplicationsComponent {
     let hash = 0;
     for (const ch of company) hash += ch.charCodeAt(0);
     return palette[hash % palette.length];
-  }
-
-  // Pill colours per application status (matches ApplyTrack).
-  statusBadge(status: string): string {
-    switch (status) {
-      case 'applied':
-        return 'bg-blue-50 text-blue-600 ring-blue-100';
-      case 'interview':
-        return 'bg-purple-50 text-purple-600 ring-purple-100';
-      case 'offer':
-        return 'bg-emerald-50 text-emerald-600 ring-emerald-100';
-      case 'rejected':
-        return 'bg-red-50 text-red-600 ring-red-100';
-      default:
-        return 'bg-amber-50 text-amber-600 ring-amber-100';
-    }
-  }
-
-  constructor(){
-    console.log(this.appService.applications()) 
   }
 }
