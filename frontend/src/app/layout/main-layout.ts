@@ -1,7 +1,8 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { LucideLogOut } from '@lucide/angular';
 import { AuthService } from '../services/auth.service';
+import { ApplicationService } from '../services/application.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -57,9 +58,10 @@ import { AuthService } from '../services/auth.service';
     </div>
   `,
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly apps = inject(ApplicationService);
 
   readonly user = this.auth.user;
   readonly initial = computed(() => (this.user()?.fullName?.[0] ?? '?').toUpperCase());
@@ -71,6 +73,11 @@ export class MainLayoutComponent {
     { path: '/addapplication', label: 'Add Application', exact: false },
     { path: '/settings', label: 'Settings', exact: false },
   ];
+
+  // Load the signed-in user's applications once we're inside the authenticated shell.
+  ngOnInit(): void {
+    this.apps.loadApplications();
+  }
 
   logout(): void {
     this.auth.logout().subscribe({

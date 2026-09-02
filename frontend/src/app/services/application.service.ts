@@ -1,19 +1,73 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, tap } from 'rxjs';
 import { Application, ApplicationStatus, JobType } from '../models/application.model';
-import { MOCK_APPLICATIONS } from '../data/mock-applications';
+import { API_BASE_URL } from '../core/api';
 
 // The three ways the list can be ordered.
 export type SortOption = 'date-desc' | 'date-asc' | 'company-asc';
+
+// The raw row shape the API returns (snake_case columns straight from Postgres).
+interface ApplicationRow {
+  id: number;
+  company: string;
+  role: string;
+  location: string;
+  job_type: JobType;
+  status: ApplicationStatus;
+  date_applied: string;
+  follow_up_date: string | null;
+  interview_date: string | null;
+  salary: string | null;
+  source: string | null;
+  notes: string | null;
+}
+
+// The API stores dates as timestamptz, so a "2026-09-01" comes back shifted
+// (e.g. "2026-08-31T18:15:00Z"). Format back to the intended local YYYY-MM-DD.
+function toLocalDate(value: string): string {
+  const d = new Date(value);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Map an API row (snake_case) into our camelCase Application model.
+function toApplication(r: ApplicationRow): Application {
+  return {
+    id: r.id,
+    company: r.company,
+    role: r.role,
+    location: r.location,
+    jobType: r.job_type,
+    status: r.status,
+    dateApplied: toLocalDate(r.date_applied),
+    followUpDate: r.follow_up_date ? toLocalDate(r.follow_up_date) : undefined,
+    interviewDate: r.interview_date ? toLocalDate(r.interview_date) : undefined,
+    salary: r.salary ?? undefined,
+    source: r.source ?? undefined,
+    notes: r.notes ?? undefined,
+  };
+}
 
 // The shared store for job applications — this is the Angular equivalent
 // of your Zustand store. @Injectable + providedIn:'root' makes it a singleton.
 @Injectable({ providedIn: 'root' })
 export class ApplicationService {
-  // Private writable signal holds the actual list.
-  private readonly _applications = signal<Application[]>(MOCK_APPLICATIONS);
+  private readonly http = inject(HttpClient);
+
+  // Private writable signal holds the actual list (loaded from the API).
+  private readonly _applications = signal<Application[]>([]);
 
   // Public read-only view so components can read but not overwrite the array.
   readonly applications = this._applications.asReadonly();
+
+  // Async state for the list load (the manual version of TanStack Query's isLoading/error).
+  private readonly _loading = signal(false);
+  readonly loading = this._loading.asReadonly();
+  private readonly _error = signal<string | null>(null);
+  readonly error = this._error.asReadonly();
 
   // The current search term (writable only inside the service).
   private readonly _search = signal('');
@@ -175,10 +229,33 @@ export class ApplicationService {
     this._page.update((p) => Math.max(p - 1, 1));
   }
 
-  // Adds a new application to the top of the list (mock create until the API).
-  addApplication(data: Omit<Application, 'id'>): void {
-    const nextId = Math.max(0, ...this._applications().map((a) => a.id)) + 1;
-    this._applications.update((list) => [{ ...data, id: nextId }, ...list]);
+  // GET /applications — load the signed-in user's applications into the signal.
+  loadApplications(): void {
+    this._loading.set(true);
+    this._error.set(null);
+    this.http
+      .get<{ applications: ApplicationRow[] }>(`${API_BASE_URL}/applications`)
+      .pipe(map((res) => res.applications.map(toApplication)))
+      .subscribe({
+        next: (apps) => {
+          this._applications.set(apps);
+          this._loading.set(false);
+        },
+        error: () => {
+          this._error.set('Failed to load applications.');
+          this._loading.set(false);
+        },
+      });
+  }
+
+  // POST /applications — create, then prepend the saved row to the list.
+  addApplication(data: Omit<Application, 'id'>): Observable<Application> {
+    return this.http
+      .post<{ application: ApplicationRow }>(`${API_BASE_URL}/applications`, data)
+      .pipe(
+        map((res) => toApplication(res.application)),
+        tap((app) => this._applications.update((list) => [app, ...list])),
+      );
   }
 
   // Looks up a single application by id (for the edit form to prefill).
@@ -186,24 +263,28 @@ export class ApplicationService {
     return this._applications().find((a) => a.id === id);
   }
 
-  // Replaces an existing application with updated data.
-  updateApplication(id: number, data: Omit<Application, 'id'>): void {
-    this._applications.update((list) =>
-      list.map((a) => (a.id === id ? { ...data, id } : a)),
+  // PUT /applications/:id — update, then replace the row in the list.
+  updateApplication(id: number, data: Omit<Application, 'id'>): Observable<Application> {
+    return this.http
+      .put<{ application: ApplicationRow }>(`${API_BASE_URL}/applications/${id}`, data)
+      .pipe(
+        map((res) => toApplication(res.application)),
+        tap((app) =>
+          this._applications.update((list) => list.map((a) => (a.id === id ? app : a))),
+        ),
+      );
+  }
+
+  // DELETE /applications/:id — remove, then drop the row from the list.
+  deleteApplication(id: number): Observable<unknown> {
+    return this.http.delete(`${API_BASE_URL}/applications/${id}`).pipe(
+      tap(() => {
+        this._applications.update((list) => list.filter((a) => a.id !== id));
+        // If the current page no longer exists (deleted the last row on it), step back.
+        if (this._page() > this.totalPages()) {
+          this._page.set(this.totalPages());
+        }
+      }),
     );
-  }
-
-  // Removes an application by id.
-  deleteApplication(id: number): void {
-    this._applications.update((list) => list.filter((a) => a.id !== id));
-    // If the current page no longer exists (deleted the last row on it), step back.
-    if (this._page() > this.totalPages()) {
-      this._page.set(this.totalPages());
-    }
-  }
-
-  constructor() {
-    // Read the signal by calling it — logs the current list to the console.
-    console.log(this._applications());
   }
 }

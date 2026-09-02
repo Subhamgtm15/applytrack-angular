@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApplicationService } from '../../services/application.service';
@@ -175,6 +175,10 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
         </div>
       </section>
 
+      @if (error()) {
+        <p class="mb-4 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">{{ error() }}</p>
+      }
+
       <!-- Actions -->
       <div class="flex justify-end gap-3 border-t border-slate-200 pt-6">
         <button
@@ -199,6 +203,8 @@ export class AddApplicationComponent {
   private readonly appService = inject(ApplicationService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  readonly error = signal<string | null>(null);
 
   // Present only on the edit route (/addapplication/:id) — drives add-vs-edit mode.
   private readonly editId = this.route.snapshot.paramMap.get('id');
@@ -246,6 +252,7 @@ export class AddApplicationComponent {
       this.form.markAllAsTouched(); // reveal all validation messages
       return;
     }
+    this.error.set(null);
     const value = this.form.getRawValue();
     const data = {
       ...value,
@@ -256,12 +263,14 @@ export class AddApplicationComponent {
       notes: value.notes || undefined,
     };
 
-    if (this.editId) {
-      this.appService.updateApplication(Number(this.editId), data);
-    } else {
-      this.appService.addApplication(data);
-    }
-    this.router.navigate(['/applications']);
+    const request = this.editId
+      ? this.appService.updateApplication(Number(this.editId), data)
+      : this.appService.addApplication(data);
+
+    request.subscribe({
+      next: () => this.router.navigate(['/applications']),
+      error: () => this.error.set('Could not save the application. Please try again.'),
+    });
   }
 
   clearForm(): void {

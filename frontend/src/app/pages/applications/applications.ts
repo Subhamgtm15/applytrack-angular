@@ -142,7 +142,13 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
               </div>
             } @empty {
               <div class="px-6 py-12 text-center text-slate-400">
-                No applications match your search.
+                @if (appService.loading()) {
+                  Loading applications…
+                } @else if (appService.error()) {
+                  {{ appService.error() }}
+                } @else {
+                  No applications match your search.
+                }
               </div>
             }
           </div>
@@ -201,7 +207,7 @@ export class ApplicationsComponent {
   // Confirms, then asks the service to remove the application.
   onDelete(id: number): void {
     if (confirm('Delete this application?')) {
-      this.appService.deleteApplication(id);
+      this.appService.deleteApplication(id).subscribe();
     }
   }
 
