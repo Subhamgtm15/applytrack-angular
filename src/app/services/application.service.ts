@@ -129,6 +129,15 @@ export class ApplicationService {
     );
   }
 
+  // Removes an application by id.
+  deleteApplication(id: number): void {
+    this._applications.update((list) => list.filter((a) => a.id !== id));
+    // If the current page no longer exists (deleted the last row on it), step back.
+    if (this._page() > this.totalPages()) {
+      this._page.set(this.totalPages());
+    }
+  }
+
   constructor() {
     // Read the signal by calling it — logs the current list to the console.
     console.log(this._applications());

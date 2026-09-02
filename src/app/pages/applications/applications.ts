@@ -79,6 +79,12 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
               class="text-sm font-medium text-indigo-600 hover:underline"
               >Edit</a
             >
+            <button
+              (click)="onDelete(app.id)"
+              class="text-sm font-medium text-red-600 hover:underline"
+            >
+              Delete
+            </button>
           </div>
         </div>
       } @empty {
@@ -132,6 +138,13 @@ export class ApplicationsComponent {
   onSortChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as SortOption;
     this.appService.setSort(value);
+  }
+
+  // Confirms, then asks the service to remove the application.
+  onDelete(id: number): void {
+    if (confirm('Delete this application?')) {
+      this.appService.deleteApplication(id);
+    }
   }
 
   constructor(){
