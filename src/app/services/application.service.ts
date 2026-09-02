@@ -83,6 +83,21 @@ export class ApplicationService {
     return this.sortedApplications().slice(start, start + this.pageSize);
   });
 
+  // Dashboard stats: counts by status + rejection rate, derived from the data signal.
+  readonly stats = computed(() => {
+    const apps = this._applications();
+    const by = (s: ApplicationStatus) => apps.filter((a) => a.status === s).length;
+    const rejections = by('rejected');
+    return {
+      total: apps.length,
+      interviews: by('interview'),
+      offers: by('offer'),
+      rejections,
+      followUps: by('follow-up'),
+      rejectionRate: apps.length ? Math.round((rejections / apps.length) * 100) : 0,
+    };
+  });
+
   setSearch(value: string): void {
     this._search.set(value);
     this._page.set(1); // changing a filter jumps back to the first page
