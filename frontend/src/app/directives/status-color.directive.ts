@@ -11,7 +11,7 @@ export class StatusColorDirective {
   // Binds the full pill class string onto the host element, chosen by status.
   @HostBinding('class')
   get classes(): string {
-    const base = 'inline-flex rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1';
+    const base = 'inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold capitalize ring-1';
     const colors: Record<string, string> = {
       applied: 'bg-blue-50 text-blue-600 ring-blue-100',
       interview: 'bg-purple-50 text-purple-600 ring-purple-100',

@@ -11,6 +11,7 @@ import {
 import { ApplicationService } from '../../services/application.service';
 import { AuthService } from '../../services/auth.service';
 import { StatCardComponent } from '../../components/stat-card/stat-card';
+import { StatusColorDirective } from '../../directives/status-color.directive';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,6 +20,7 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
     NgxChartsModule,
     RouterLink,
     DatePipe,
+    StatusColorDirective,
     LucideHandshake,
     LucideClock3,
     LucideChevronRight,
@@ -176,12 +178,7 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
                 {{ app.role }} <span class="text-slate-300">/</span> {{ app.location }}
               </p>
             </div>
-            <span
-              class="shrink-0 rounded-full border px-3 py-1 text-xs font-medium capitalize"
-              [class]="statusBadge(app.status)"
-            >
-              {{ app.status }}
-            </span>
+            <span [appStatusColor]="app.status">{{ app.status }}</span>
             <span class="hidden w-24 shrink-0 text-right text-sm text-slate-500 sm:block">
               {{ app.dateApplied | date: 'MMM d, y' }}
             </span>
@@ -252,21 +249,5 @@ export class DashboardComponent {
     let hash = 0;
     for (const ch of company) hash += ch.charCodeAt(0);
     return palette[hash % palette.length];
-  }
-
-  // Pill colours per application status.
-  statusBadge(status: string): string {
-    switch (status) {
-      case 'applied':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'interview':
-        return 'text-purple-600 bg-purple-50 border-purple-200';
-      case 'offer':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'rejected':
-        return 'text-red-600 bg-red-50 border-red-200';
-      default:
-        return 'text-amber-600 bg-amber-50 border-amber-200';
-    }
   }
 }
