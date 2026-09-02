@@ -1,26 +1,16 @@
 import { Component, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
-import { LucideMapPin, LucidePencil, LucideTrash2, LucidePlus } from '@lucide/angular';
-import { StatusColorDirective } from '../../directives/status-color.directive';
+import { LucidePlus } from '@lucide/angular';
+import { ApplicationRowComponent } from '../../components/application-row/application-row';
 import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
-  imports: [
-    RouterLink,
-    ReactiveFormsModule,
-    DatePipe,
-    StatusColorDirective,
-    LucideMapPin,
-    LucidePencil,
-    LucideTrash2,
-    LucidePlus,
-  ],
+  imports: [RouterLink, ReactiveFormsModule, ApplicationRowComponent, LucidePlus],
   template: `
     <div class="flex items-center justify-between mb-6">
       <div>
@@ -100,53 +90,7 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
 
           <div class="divide-y divide-slate-100">
             @for (app of appService.pagedApplications(); track app.id) {
-              <div
-                class="grid grid-cols-[2.2fr_1.8fr_1.2fr_1.6fr_1fr_1fr_88px] items-center gap-4 px-6 py-4"
-              >
-                <div class="flex min-w-0 items-center gap-3">
-                  <div
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold text-white"
-                    [class]="avatarColor(app.company)"
-                  >
-                    {{ app.company.charAt(0).toUpperCase() }}
-                  </div>
-                  <div class="min-w-0">
-                    <p class="truncate font-semibold text-slate-900">{{ app.company }}</p>
-                    <p class="text-sm capitalize text-slate-500">{{ app.jobType }}</p>
-                  </div>
-                </div>
-                <div class="min-w-0">
-                  <p class="truncate font-semibold text-slate-900">{{ app.role }}</p>
-                  <p class="text-sm text-slate-500">{{ app.salary || '-' }}</p>
-                </div>
-                <div>
-                  <span [appStatusColor]="app.status">{{ app.status }}</span>
-                </div>
-                <div class="flex min-w-0 items-center gap-2 text-sm text-slate-500">
-                  <svg lucideMapPin class="h-4 w-4 shrink-0 text-slate-400"></svg>
-                  <span class="truncate">{{ app.location }}</span>
-                </div>
-                <div class="text-sm text-slate-500">{{ app.dateApplied | date: 'MMM d' }}</div>
-                <div class="text-sm text-amber-600">
-                  {{ app.followUpDate ? (app.followUpDate | date: 'MMM d') : '-' }}
-                </div>
-                <div class="flex items-center justify-end gap-1 text-slate-400">
-                  <a
-                    [routerLink]="['/addapplication', app.id]"
-                    class="rounded-lg p-1.5 transition hover:bg-slate-100 hover:text-slate-600"
-                    aria-label="Edit"
-                  >
-                    <svg lucidePencil class="h-4 w-4"></svg>
-                  </a>
-                  <button
-                    (click)="onDelete(app.id)"
-                    class="rounded-lg p-1.5 transition hover:bg-slate-100 hover:text-red-500"
-                    aria-label="Delete"
-                  >
-                    <svg lucideTrash2 class="h-4 w-4"></svg>
-                  </button>
-                </div>
-              </div>
+              <app-application-row [application]="app" (delete)="onDelete($event)" />
             } @empty {
               <div class="px-6 py-12 text-center text-slate-400">
                 @if (appService.loading()) {
@@ -228,22 +172,5 @@ export class ApplicationsComponent {
     if (confirm('Delete this application?')) {
       this.appService.deleteApplication(id).subscribe();
     }
-  }
-
-  // Deterministic avatar colour per company (first-letter badge).
-  avatarColor(company: string): string {
-    const palette = [
-      'bg-indigo-500',
-      'bg-violet-500',
-      'bg-sky-500',
-      'bg-emerald-500',
-      'bg-amber-500',
-      'bg-orange-500',
-      'bg-rose-500',
-      'bg-slate-900',
-    ];
-    let hash = 0;
-    for (const ch of company) hash += ch.charCodeAt(0);
-    return palette[hash % palette.length];
   }
 }
