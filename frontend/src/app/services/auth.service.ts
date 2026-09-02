@@ -30,6 +30,13 @@ export class AuthService {
       .pipe(switchMap(() => this.fetchMe()));
   }
 
+  // Exchange the token from the Google OAuth callback for the auth cookie, then load the user.
+  session(token: string): Observable<AuthUser> {
+    return this.http
+      .post(`${API_BASE_URL}/auth/session`, { token })
+      .pipe(switchMap(() => this.fetchMe()));
+  }
+
   // POST /auth/signup only creates the account (no session), so we don't set the user here.
   signup(fullName: string, email: string, password: string): Observable<AuthUser> {
     return this.http

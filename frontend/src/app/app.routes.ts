@@ -5,6 +5,7 @@ import { AddApplicationComponent } from './pages/add-application/add-application
 import { SettingsComponent } from './pages/settings/settings';
 import { LoginComponent } from './pages/auth/login';
 import { SignupComponent } from './pages/auth/signup';
+import { AuthCallbackComponent } from './pages/auth/callback';
 import { MainLayoutComponent } from './layout/main-layout';
 import { authGuard } from './guards/auth.guard';
 
@@ -13,6 +14,7 @@ import { authGuard } from './guards/auth.guard';
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'signup', component: SignupComponent },
+  { path: 'auth/callback', component: AuthCallbackComponent },
   {
     path: '',
     component: MainLayoutComponent,
