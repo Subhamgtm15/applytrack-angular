@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { LucideBriefcaseBusiness } from '@lucide/angular';
 import { AuthService } from '../../services/auth.service';
+import { API_BASE_URL } from '../../core/api';
 
 @Component({
   selector: 'app-login',
@@ -48,6 +49,10 @@ import { AuthService } from '../../services/auth.service';
             }
           </div>
 
+          @if (error()) {
+            <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
+          }
+
           <button
             type="submit"
             class="w-full cursor-pointer rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white transition hover:bg-indigo-700"
@@ -90,6 +95,8 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  readonly error = signal<string | null>(null);
+
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
@@ -100,13 +107,15 @@ export class LoginComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { email } = this.form.getRawValue();
-    this.auth.login(email); // mock: sets the user + persists
-    this.router.navigate(['/']); // send them to the dashboard
+    this.error.set(null);
+    const { email, password } = this.form.getRawValue();
+    this.auth.login(email, password).subscribe({
+      next: () => this.router.navigate(['/']),
+      error: (err) => this.error.set(err.error?.message ?? 'Login failed'),
+    });
   }
 
   continueWithGoogle(): void {
-    this.auth.login('you@gmail.com');
-    this.router.navigate(['/']);
+    window.location.href = `${API_BASE_URL}/auth/google`;
   }
 }

@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { LucideBriefcaseBusiness } from '@lucide/angular';
 import { AuthService } from '../../services/auth.service';
+import { API_BASE_URL } from '../../core/api';
 
 @Component({
   selector: 'app-signup',
@@ -61,6 +62,10 @@ import { AuthService } from '../../services/auth.service';
             }
           </div>
 
+          @if (error()) {
+            <p class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error() }}</p>
+          }
+
           <button
             type="submit"
             class="w-full cursor-pointer rounded-lg bg-indigo-600 px-5 py-2.5 font-medium text-white transition hover:bg-indigo-700"
@@ -103,6 +108,8 @@ export class SignupComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  readonly error = signal<string | null>(null);
+
   readonly form = this.fb.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
@@ -114,14 +121,16 @@ export class SignupComponent {
       this.form.markAllAsTouched();
       return;
     }
-    const { email, fullName } = this.form.getRawValue();
-    // Mock: log the new user straight in. Real flow = POST /auth/signup, then redirect to /login.
-    this.auth.login(email, fullName);
-    this.router.navigate(['/']);
+    this.error.set(null);
+    const { fullName, email, password } = this.form.getRawValue();
+    // Signup only creates the account; the user then logs in to start a session.
+    this.auth.signup(fullName, email, password).subscribe({
+      next: () => this.router.navigate(['/login']),
+      error: (err) => this.error.set(err.error?.message ?? 'Sign up failed'),
+    });
   }
 
   continueWithGoogle(): void {
-    this.auth.login('you@gmail.com');
-    this.router.navigate(['/']);
+    window.location.href = `${API_BASE_URL}/auth/google`;
   }
 }

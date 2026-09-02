@@ -1,38 +1,53 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, switchMap, tap } from 'rxjs';
+import { API_BASE_URL } from '../core/api';
 
 export interface AuthUser {
   fullName: string;
   email: string;
 }
 
-const STORAGE_KEY = 'applytrack_user';
+// Shape of the { user } payload returned by /auth/me and /auth/signup.
+interface UserResponse {
+  user: { fullName: string; email: string };
+}
 
 // Shared auth state — the Angular equivalent of ApplyTrack's Zustand authStore.
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // The logged-in user (or null). Initialised from localStorage so a refresh keeps you signed in.
-  private readonly _user = signal<AuthUser | null>(this.readStored());
+  private readonly http = inject(HttpClient);
+
+  private readonly _user = signal<AuthUser | null>(null);
   readonly user = this._user.asReadonly();
   readonly isLoggedIn = computed(() => this._user() !== null);
 
-  // Mock login until the real API is wired: accepts any credentials.
-  login(email: string, fullName = 'Subham Gautam'): void {
-    const user: AuthUser = { email, fullName };
-    this._user.set(user);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  // POST /auth/login sets the httpOnly cookie but returns no user, so we chain a
+  // /auth/me call to load the profile and populate the signal.
+  login(email: string, password: string): Observable<AuthUser> {
+    return this.http
+      .post(`${API_BASE_URL}/auth/login`, { email, password })
+      .pipe(switchMap(() => this.fetchMe()));
   }
 
-  logout(): void {
-    this._user.set(null);
-    localStorage.removeItem(STORAGE_KEY);
+  // POST /auth/signup only creates the account (no session), so we don't set the user here.
+  signup(fullName: string, email: string, password: string): Observable<AuthUser> {
+    return this.http
+      .post<UserResponse>(`${API_BASE_URL}/auth/signup`, { fullName, email, password })
+      .pipe(map((res) => res.user));
   }
 
-  private readStored(): AuthUser | null {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as AuthUser) : null;
-    } catch {
-      return null;
-    }
+  logout(): Observable<unknown> {
+    return this.http
+      .post(`${API_BASE_URL}/auth/logout`, {})
+      .pipe(tap(() => this._user.set(null)));
+  }
+
+  // Load the current user from the auth cookie; used after login and on app startup.
+  fetchMe(): Observable<AuthUser> {
+    return this.http.get<UserResponse>(`${API_BASE_URL}/auth/me`).pipe(
+      map((res) => ({ fullName: res.user.fullName, email: res.user.email })),
+      tap((user) => this._user.set(user)),
+    );
   }
 }
