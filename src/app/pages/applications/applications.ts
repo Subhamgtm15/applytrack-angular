@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { ApplicationService } from '../../services/application.service';
+import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus } from '../../models/application.model';
 
 @Component({
@@ -30,10 +30,19 @@ import { ApplicationStatus } from '../../models/application.model';
         <option value="rejected">Rejected</option>
         <option value="follow-up">Follow-up</option>
       </select>
+      <select
+        [value]="appService.sort()"
+        (change)="onSortChange($event)"
+        class="px-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option value="date-desc">Newest first</option>
+        <option value="date-asc">Oldest first</option>
+        <option value="company-asc">Company A–Z</option>
+      </select>
     </div>
 
     <div class="space-y-3">
-      @for (app of appService.filteredApplications(); track app.id) {
+      @for (app of appService.sortedApplications(); track app.id) {
         <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-4">
           <div>
             <p class="font-semibold text-slate-900">{{ app.role }}</p>
@@ -62,6 +71,12 @@ export class ApplicationsComponent {
   onStatusChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value as 'all' | ApplicationStatus;
     this.appService.setStatusFilter(value);
+  }
+
+  // Reads the selected sort option and pushes it into the service's sort signal.
+  onSortChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as SortOption;
+    this.appService.setSort(value);
   }
 
   constructor(){
