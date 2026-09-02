@@ -7,7 +7,7 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-main-layout',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideLogOut],
   template: `
-    <div class="flex min-h-screen bg-slate-50 text-slate-900">
+    <div class="flex h-screen overflow-hidden bg-slate-50 text-slate-900">
       <!-- Sidebar: outside the outlet, so it stays put while pages swap -->
       <aside class="flex w-60 flex-col border-r border-slate-200 bg-white">
         <div class="flex h-16 items-center border-b border-slate-200 px-6 text-lg font-bold">
@@ -51,7 +51,7 @@ import { AuthService } from '../services/auth.service';
       </aside>
 
       <!-- Main content: child routes render here and swap on navigation -->
-      <main class="flex-1 p-6">
+      <main class="flex-1 overflow-y-auto p-6">
         <router-outlet />
       </main>
     </div>
