@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { ApplicationService } from '../../services/application.service';
+import { ApplicationStatus } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
@@ -9,13 +10,27 @@ import { ApplicationService } from '../../services/application.service';
       {{ appService.filteredApplications().length }} of {{ appService.applications().length }} applications
     </p>
 
-    <input
-      type="text"
-      placeholder="Search by company or role..."
-      [value]="appService.search()"
-      (input)="onSearch($event)"
-      class="w-full sm:w-80 mb-6 px-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-    />
+    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+      <input
+        type="text"
+        placeholder="Search by company or role..."
+        [value]="appService.search()"
+        (input)="onSearch($event)"
+        class="w-full sm:w-80 px-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      />
+      <select
+        [value]="appService.statusFilter()"
+        (change)="onStatusChange($event)"
+        class="px-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      >
+        <option value="all">All status</option>
+        <option value="applied">Applied</option>
+        <option value="interview">Interview</option>
+        <option value="offer">Offer</option>
+        <option value="rejected">Rejected</option>
+        <option value="follow-up">Follow-up</option>
+      </select>
+    </div>
 
     <div class="space-y-3">
       @for (app of appService.filteredApplications(); track app.id) {
@@ -41,6 +56,12 @@ export class ApplicationsComponent {
   // Reads the input's value and pushes it into the service's search signal.
   onSearch(event: Event): void {
     this.appService.setSearch((event.target as HTMLInputElement).value);
+  }
+
+  // Reads the selected status and pushes it into the service's status-filter signal.
+  onStatusChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value as 'all' | ApplicationStatus;
+    this.appService.setStatusFilter(value);
   }
 
   constructor(){
