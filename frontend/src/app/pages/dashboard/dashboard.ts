@@ -9,6 +9,7 @@ import {
   LucidePlus,
 } from '@lucide/angular';
 import { ApplicationService } from '../../services/application.service';
+import { AuthService } from '../../services/auth.service';
 import { StatCardComponent } from '../../components/stat-card/stat-card';
 
 @Component({
@@ -25,7 +26,7 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
   ],
   template: `
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-slate-900">Good to see you, Subham</h1>
+      <h1 class="text-2xl font-bold text-slate-900">Good to see you, {{ firstName() }}</h1>
       <p class="text-slate-500">Here's how your job hunt is going.</p>
     </div>
 
@@ -89,8 +90,17 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
               [yAxis]="true"
               [yAxisTickFormatting]="formatCount"
               [roundEdges]="true"
-              [barPadding]="90"
-            />
+              [barPadding]="110"
+            >
+              <ng-template #tooltipTemplate let-model="model">
+                <div class="px-3.5 py-2.5">
+                  <div class="text-sm font-semibold text-slate-900">{{ model.extra?.range }}</div>
+                  <div class="mt-0.5 text-xs text-slate-500">
+                    Count : {{ model.value }} applications
+                  </div>
+                </div>
+              </ng-template>
+            </ngx-charts-bar-vertical>
           </div>
         </div>
       </div>
@@ -203,10 +213,16 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
 })
 export class DashboardComponent {
   readonly appService = inject(ApplicationService);
+  private readonly auth = inject(AuthService);
+
+  // The logged-in user's first name for the greeting.
+  readonly firstName = computed(() => this.auth.user()?.fullName?.split(' ')[0] ?? 'there');
 
   // Format the weekly counts for ngx-charts ({ name, value }).
   readonly chartData = computed(() =>
-    this.appService.weeklyActivity().map((w) => ({ name: w.label, value: w.count })),
+    this.appService
+      .weeklyActivity()
+      .map((w) => ({ name: w.label, value: w.count, extra: { range: w.range } })),
   );
 
   // Single violet series to match the ApplyTrack chart.

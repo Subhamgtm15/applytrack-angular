@@ -169,11 +169,17 @@ export class ApplicationService {
       const weekStart = new Date(weekEnd);
       weekStart.setDate(weekEnd.getDate() - 6);
       const count = this._applications().filter((a) => {
-        const d = new Date(a.dateApplied);
+        // Parse YYYY-MM-DD as local midnight; new Date('2026-09-02') parses as
+        // UTC and shifts past the local weekEnd bound, dropping today's entry.
+        const [y, m, day] = a.dateApplied.split('-').map(Number);
+        const d = new Date(y, m - 1, day);
         return d >= weekStart && d <= weekEnd;
       }).length;
+      const fmt = (day: Date) =>
+        day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       return {
-        label: weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        label: fmt(weekEnd),
+        range: `${fmt(weekStart)} - ${fmt(weekEnd)}`,
         count,
       };
     });

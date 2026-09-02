@@ -12,3 +12,28 @@ body {
   font-family: inherit;
 }
 
+/* Light card styling for the ngx-charts bar tooltip (Application Activity). */
+.ngx-charts-tooltip-content.type-tooltip {
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow:
+    0 10px 25px -5px rgb(0 0 0 / 0.15),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  padding: 0;
+  text-align: left;
+}
+.ngx-charts-tooltip-content.type-tooltip .tooltip-caret.position-top {
+  border-top-color: #fff;
+}
+.ngx-charts-tooltip-content.type-tooltip .tooltip-caret.position-bottom {
+  border-bottom-color: #fff;
+}
+.ngx-charts-tooltip-content.type-tooltip .tooltip-caret.position-left {
+  border-left-color: #fff;
+}
+.ngx-charts-tooltip-content.type-tooltip .tooltip-caret.position-right {
+  border-right-color: #fff;
+}
+
