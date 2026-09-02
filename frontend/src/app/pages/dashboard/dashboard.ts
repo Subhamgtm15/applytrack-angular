@@ -87,6 +87,7 @@ import { StatCardComponent } from '../../components/stat-card/stat-card';
               [scheme]="scheme"
               [xAxis]="true"
               [yAxis]="true"
+              [yAxisTickFormatting]="formatCount"
               [roundEdges]="true"
               [barPadding]="90"
             />
@@ -215,6 +216,11 @@ export class DashboardComponent {
     group: ScaleType.Ordinal,
     domain: ['#8b5cf6'],
   };
+
+  // ngx-charts renders Y-axis ticks as floats (0.000000); show whole numbers only.
+  formatCount(value: number): string {
+    return Number.isInteger(value) ? String(value) : '';
+  }
 
   // Deterministic avatar colour per company (first-letter badge).
   avatarColor(company: string): string {
