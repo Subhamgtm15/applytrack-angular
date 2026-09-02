@@ -98,6 +98,55 @@ export class ApplicationService {
     };
   });
 
+  // The 5 most recently applied.
+  readonly recentApplications = computed(() =>
+    [...this._applications()]
+      .sort((a, b) => new Date(b.dateApplied).getTime() - new Date(a.dateApplied).getTime())
+      .slice(0, 5),
+  );
+
+  // Applications submitted in each of the last 6 weeks (for the activity chart).
+  readonly weeklyActivity = computed(() => {
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+    return Array.from({ length: 6 }, (_, i) => {
+      const weekEnd = new Date(end);
+      weekEnd.setDate(end.getDate() - (5 - i) * 7);
+      const weekStart = new Date(weekEnd);
+      weekStart.setDate(weekEnd.getDate() - 6);
+      const count = this._applications().filter((a) => {
+        const d = new Date(a.dateApplied);
+        return d >= weekStart && d <= weekEnd;
+      }).length;
+      return {
+        label: weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        count,
+      };
+    });
+  });
+
+  // Upcoming interviews & follow-ups (future-dated), earliest first, top 3.
+  readonly upcoming = computed(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return this._applications()
+      .map((app) => {
+        if (app.status === 'interview' && app.interviewDate) {
+          return { app, date: app.interviewDate, kind: 'Interview' as const };
+        }
+        if (app.status === 'follow-up' && app.followUpDate) {
+          return { app, date: app.followUpDate, kind: 'Follow-up' as const };
+        }
+        return null;
+      })
+      .filter(
+        (item): item is { app: Application; date: string; kind: 'Interview' | 'Follow-up' } =>
+          item !== null && new Date(item.date) >= now,
+      )
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 3);
+  });
+
   setSearch(value: string): void {
     this._search.set(value);
     this._page.set(1); // changing a filter jumps back to the first page

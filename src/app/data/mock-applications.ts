@@ -11,6 +11,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     status: 'interview',
     dateApplied: '2026-08-20',
     salary: '$120k',
+    interviewDate: '2026-09-08',
   },
   {
     id: 2,
@@ -48,6 +49,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     jobType: 'contract',
     status: 'follow-up',
     dateApplied: '2026-08-27',
+    followUpDate: '2026-09-10',
   },
   {
     id: 6,
@@ -67,6 +69,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     status: 'interview',
     dateApplied: '2026-08-15',
     salary: '$110k',
+    interviewDate: '2026-09-05',
   },
   {
     id: 8,
@@ -94,5 +97,6 @@ export const MOCK_APPLICATIONS: Application[] = [
     jobType: 'internship',
     status: 'follow-up',
     dateApplied: '2026-08-29',
+    followUpDate: '2026-09-06',
   },
 ];
