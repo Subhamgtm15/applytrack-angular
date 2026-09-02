@@ -1,72 +1,62 @@
 # ApplyTrack
 
-A job application tracker I use to keep tabs on where I've applied, what stage each one is at, and what's coming up next.
+A job application tracker for keeping tabs on where you've applied, what stage each one is at, and what's coming up next.
 
-I first built ApplyTrack in React. This repo is the **Angular rebuild** — same product, rewritten from scratch to actually learn Angular (signals, standalone components, reactive forms, the RxJS side of things) instead of just skimming the docs. Coming from a React/Node background, I wanted a real app to port rather than a toy example.
+I first built ApplyTrack in React. This is the Angular version of it. I rebuilt it mostly as a way to learn Angular by working on something I actually use.
 
-**Stack:** Angular 21 · Express · PostgreSQL
-
----
+Stack: Angular, Express, and PostgreSQL.
 
 ## Features
 
-- **Dashboard** — application stats, a 6-week activity chart, upcoming interviews/follow-ups, and your most recent applications.
-- **Applications** — full CRUD in a sortable, filterable table, with server-side search (debounced) and pagination.
-- **Auth** — email/password and Google sign-in. Sessions live in a JWT stored as an httpOnly cookie, not in localStorage.
-- **Profile** — edit your name, current/target role, and LinkedIn from Settings.
-- Stays logged in across refreshes, data is scoped per user.
+- Dashboard with your application stats, a weekly activity chart, upcoming interviews and follow-ups, and recent applications.
+- Applications table with create, edit and delete, plus search, filters, sorting and pagination.
+- Login with email and password, or with Google. Sessions use a JWT stored in an httpOnly cookie.
+- A settings page for editing your profile (name, current and target role, LinkedIn).
+- Stays logged in after a refresh, and each user only sees their own data.
 
 ## Tech
 
-**Frontend** — Angular 21 (standalone components, signals, zoneless change detection), Tailwind CSS v4, ngx-charts, Reactive Forms, RxJS.
+Frontend: Angular 21 (standalone components, signals), Tailwind CSS, ngx-charts, Reactive Forms and RxJS.
 
-**Backend** — Express 5, PostgreSQL (`pg`), JWT + bcrypt, Passport for Google OAuth — all TypeScript.
+Backend: Express, PostgreSQL, JWT, bcrypt, and Passport for Google OAuth, written in TypeScript.
 
 ## Project structure
 
-Small monorepo, two workspaces:
+It's a monorepo with two folders:
 
 ```
-.
-├── frontend/   # Angular app  (localhost:4200)
-└── backend/    # Express + PostgreSQL API  (localhost:5000)
+frontend/   Angular app, runs on port 4200
+backend/    Express + PostgreSQL API, runs on port 5000
 ```
 
 ## Running it locally
 
-You'll need **Node 20+** and a **PostgreSQL** database — a local instance is fine, or something hosted like Neon.
+You'll need Node 20 or newer and a PostgreSQL database. A local one is fine, or something hosted like Neon.
+
+Install everything (root, frontend and backend):
 
 ```bash
-# 1. install everything (root, frontend, backend)
 npm run install:all
 ```
 
-```bash
-# 2. set up the backend
-cd backend
-cp .env.example .env
-#   then fill in .env:
-#   - DB connection (DATABASE_URL, or the DB_* fields for local Postgres)
-#   - JWT_SECRET
-#   - CLIENT_URL=http://localhost:4200
-#   - Google OAuth keys (optional, only if you want Google sign-in)
-npm run migrate          # create the tables
-```
+Set up the backend. Copy the example env file and fill in your values (database connection, JWT secret, CLIENT_URL, and the Google keys if you want Google login), then run the migrations:
 
 ```bash
-# 3. start both servers together (from the repo root)
+cd backend
+cp .env.example .env
+npm run migrate
+```
+
+Start both servers from the repo root:
+
+```bash
 npm run dev
 ```
 
-That boots the Angular dev server and the API side by side (via `concurrently`), so you get one terminal with labelled `frontend` / `backend` output.
-
-## A few things I wanted to get right
-
-- **State lives in services as signals** (`AuthService`, `ApplicationService`) — components stay thin and just read the signals. Coming from Zustand, this mapped over cleanly.
-- **Cookie-based auth.** The token is an httpOnly cookie set by the API; the Angular side just sends `withCredentials` via an interceptor. No tokens sitting in JS.
-- **The search** is a proper RxJS pipeline — `debounceTime → distinctUntilChanged → switchMap` — so it hits the API only when you pause typing, and stale requests get cancelled.
+This runs the Angular app and the API together.
 
 ## Notes
 
-- Google OAuth needs a client in Google Cloud Console with `http://localhost:5000/auth/google/callback` added to the authorized redirect URIs.
-- `backend/.env` is gitignored — copy it from `.env.example` and fill in your own values.
+- Auth uses an httpOnly cookie, so the frontend sends its requests with credentials.
+- For Google login, add `http://localhost:5000/auth/google/callback` to the authorized redirect URIs in Google Cloud Console.
+- `backend/.env` is gitignored, so copy it from `.env.example` and add your own values.
