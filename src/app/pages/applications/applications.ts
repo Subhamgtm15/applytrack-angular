@@ -55,7 +55,7 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
     </div>
 
     <div class="space-y-3">
-      @for (app of appService.sortedApplications(); track app.id) {
+      @for (app of appService.pagedApplications(); track app.id) {
         <div class="flex items-center justify-between bg-white border border-slate-200 rounded-xl p-4">
           <div>
             <p class="font-semibold text-slate-900">{{ app.role }}</p>
@@ -68,6 +68,26 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
       } @empty {
         <div class="text-center py-12 text-slate-400">No applications match your search.</div>
       }
+    </div>
+
+    <div class="flex items-center justify-between mt-6">
+      <button
+        (click)="appService.prevPage()"
+        [disabled]="appService.page() === 1"
+        class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Previous
+      </button>
+      <span class="text-sm text-slate-500">
+        Page {{ appService.page() }} of {{ appService.totalPages() }}
+      </span>
+      <button
+        (click)="appService.nextPage()"
+        [disabled]="appService.page() === appService.totalPages()"
+        class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
     </div>
   `,
 })

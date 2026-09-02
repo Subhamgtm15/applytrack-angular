@@ -31,6 +31,13 @@ export class ApplicationService {
   private readonly _sort = signal<SortOption>('date-desc');
   readonly sort = this._sort.asReadonly();
 
+  // How many rows per page (a plain constant — it never changes, so no signal).
+  readonly pageSize = 5;
+
+  // The current page number (1-based).
+  private readonly _page = signal(1);
+  readonly page = this._page.asReadonly();
+
   // Derived list: recomputes whenever the data, search, status, OR type changes.
   readonly filteredApplications = computed(() => {
     const term = this._search().toLowerCase().trim();
@@ -65,20 +72,43 @@ export class ApplicationService {
     });
   });
 
+  // How many pages the filtered list needs (at least 1).
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredApplications().length / this.pageSize)),
+  );
+
+  // Third computed in the chain: slice the sorted list down to the current page.
+  readonly pagedApplications = computed(() => {
+    const start = (this._page() - 1) * this.pageSize;
+    return this.sortedApplications().slice(start, start + this.pageSize);
+  });
+
   setSearch(value: string): void {
     this._search.set(value);
+    this._page.set(1); // changing a filter jumps back to the first page
   }
 
   setStatusFilter(status: 'all' | ApplicationStatus): void {
     this._statusFilter.set(status);
+    this._page.set(1);
   }
 
   setTypeFilter(type: 'all' | JobType): void {
     this._typeFilter.set(type);
+    this._page.set(1);
   }
 
   setSort(option: SortOption): void {
     this._sort.set(option);
+    this._page.set(1);
+  }
+
+  nextPage(): void {
+    this._page.update((p) => Math.min(p + 1, this.totalPages()));
+  }
+
+  prevPage(): void {
+    this._page.update((p) => Math.max(p - 1, 1));
   }
 
   constructor() {
