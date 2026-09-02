@@ -41,12 +41,16 @@ router.get("/applications", async (req:AuthRequest, res) => {
 
     const userId = req.user.userId;
 
-    const selectQuery =`
-    SELECT * FROM applications 
-    WHERE user_id = $1
-    ORDER BY date_applied DESC`;
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    const values: any[] = [userId];
+    let selectQuery = `SELECT * FROM applications WHERE user_id = $1`;
+    if (search) {
+        values.push(`%${search}%`);
+        selectQuery += ` AND (company ILIKE $2 OR role ILIKE $2)`;
+    }
+    selectQuery += ` ORDER BY date_applied DESC`;
     try {
-        const result = await pool.query(selectQuery, [userId]);
+        const result = await pool.query(selectQuery, values);
         res.status(200).json({ message: 'application fetched', applications: result.rows });
     }
     catch (error) {

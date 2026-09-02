@@ -1,6 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { Application, ApplicationStatus, JobType } from '../models/application.model';
 import { API_BASE_URL } from '../core/api';
 
@@ -69,10 +69,6 @@ export class ApplicationService {
   private readonly _error = signal<string | null>(null);
   readonly error = this._error.asReadonly();
 
-  // The current search term (writable only inside the service).
-  private readonly _search = signal('');
-  readonly search = this._search.asReadonly();
-
   // The current status filter — "all" or a specific status.
   private readonly _statusFilter = signal<'all' | ApplicationStatus>('all');
   readonly statusFilter = this._statusFilter.asReadonly();
@@ -92,19 +88,14 @@ export class ApplicationService {
   private readonly _page = signal(1);
   readonly page = this._page.asReadonly();
 
-  // Derived list: recomputes whenever the data, search, status, OR type changes.
+  // Derived list: status + type filters applied client-side (search is server-side).
   readonly filteredApplications = computed(() => {
-    const term = this._search().toLowerCase().trim();
     const status = this._statusFilter();
     const type = this._typeFilter();
     return this._applications().filter((app) => {
-      const matchesSearch =
-        !term ||
-        app.company.toLowerCase().includes(term) ||
-        app.role.toLowerCase().includes(term);
       const matchesStatus = status === 'all' || app.status === status;
       const matchesType = type === 'all' || app.jobType === type;
-      return matchesSearch && matchesStatus && matchesType;
+      return matchesStatus && matchesType;
     });
   });
 
@@ -207,11 +198,6 @@ export class ApplicationService {
       .slice(0, 3);
   });
 
-  setSearch(value: string): void {
-    this._search.set(value);
-    this._page.set(1); // changing a filter jumps back to the first page
-  }
-
   setStatusFilter(status: 'all' | ApplicationStatus): void {
     this._statusFilter.set(status);
     this._page.set(1);
@@ -235,23 +221,32 @@ export class ApplicationService {
     this._page.update((p) => Math.max(p - 1, 1));
   }
 
-  // GET /applications — load the signed-in user's applications into the signal.
-  loadApplications(): void {
+  // GET /applications?search=term — server-side search. Returns the Observable so a
+  // component can drive it through an RxJS pipeline (debounce → distinct → switchMap).
+  searchApplications(term: string): Observable<Application[]> {
     this._loading.set(true);
     this._error.set(null);
-    this.http
-      .get<{ applications: ApplicationRow[] }>(`${API_BASE_URL}/applications`)
-      .pipe(map((res) => res.applications.map(toApplication)))
-      .subscribe({
-        next: (apps) => {
+    const params = term ? new HttpParams().set('search', term) : undefined;
+    return this.http
+      .get<{ applications: ApplicationRow[] }>(`${API_BASE_URL}/applications`, { params })
+      .pipe(
+        map((res) => res.applications.map(toApplication)),
+        tap((apps) => {
           this._applications.set(apps);
+          this._page.set(1);
           this._loading.set(false);
-        },
-        error: () => {
+        }),
+        catchError(() => {
           this._error.set('Failed to load applications.');
           this._loading.set(false);
-        },
-      });
+          return of<Application[]>([]);
+        }),
+      );
+  }
+
+  // Initial load from the layout — just a search with an empty term.
+  loadApplications(): void {
+    this.searchApplications('').subscribe();
   }
 
   // POST /applications — create, then prepend the saved row to the list.

@@ -1,13 +1,24 @@
 import { Component, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { LucideMapPin, LucidePencil, LucideTrash2, LucidePlus } from '@lucide/angular';
 import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
-  imports: [RouterLink, DatePipe, LucideMapPin, LucidePencil, LucideTrash2, LucidePlus],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    DatePipe,
+    LucideMapPin,
+    LucidePencil,
+    LucideTrash2,
+    LucidePlus,
+  ],
   template: `
     <div class="flex items-center justify-between mb-6">
       <div>
@@ -30,8 +41,7 @@ import { ApplicationStatus, JobType } from '../../models/application.model';
       <input
         type="text"
         placeholder="Search by company or role..."
-        [value]="appService.search()"
-        (input)="onSearch($event)"
+        [formControl]="searchControl"
         class="w-full sm:w-80 px-4 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
       />
       <select
@@ -181,9 +191,20 @@ export class ApplicationsComponent {
   // inject() grabs the shared singleton service (Angular's DI).
   readonly appService = inject(ApplicationService);
 
-  // Reads the input's value and pushes it into the service's search signal.
-  onSearch(event: Event): void {
-    this.appService.setSearch((event.target as HTMLInputElement).value);
+  // The search box as a reactive control, so we can stream its keystrokes.
+  readonly searchControl = new FormControl('', { nonNullable: true });
+
+  constructor() {
+    // Type-ahead pipeline: wait for a 300ms pause, skip duplicate terms, then
+    // switchMap to the latest server request — cancelling any in-flight one.
+    this.searchControl.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap((term) => this.appService.searchApplications(term)),
+        takeUntilDestroyed(),
+      )
+      .subscribe();
   }
 
   // Reads the selected status and pushes it into the service's status-filter signal.
