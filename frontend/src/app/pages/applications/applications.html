@@ -112,3 +112,12 @@
     Next
   </button>
 </div>
+
+<app-confirm-dialog
+  [open]="pendingDeleteId() !== null"
+  title="Delete application?"
+  message="This permanently removes the application from your tracker."
+  confirmLabel="Delete"
+  (confirm)="confirmDelete()"
+  (cancel)="cancelDelete()"
+/>

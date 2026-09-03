@@ -1,16 +1,23 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { LucidePlus } from '@lucide/angular';
 import { ApplicationRowComponent } from '../../components/application-row/application-row';
+import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog';
 import { ApplicationService, SortOption } from '../../services/application.service';
 import { ApplicationStatus, JobType } from '../../models/application.model';
 
 @Component({
   selector: 'app-applications',
-  imports: [RouterLink, ReactiveFormsModule, ApplicationRowComponent, LucidePlus],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    ApplicationRowComponent,
+    ConfirmDialogComponent,
+    LucidePlus,
+  ],
   templateUrl: './applications.html',
 })
 export class ApplicationsComponent {
@@ -20,8 +27,10 @@ export class ApplicationsComponent {
   // The search box as a reactive control, so we can stream its keystrokes.
   readonly searchControl = new FormControl('', { nonNullable: true });
 
+  // Id of the application awaiting delete confirmation (null = dialog closed).
+  readonly pendingDeleteId = signal<number | null>(null);
+
   constructor() {
-    console.log(this.appService.applications());
     // Type-ahead pipeline: wait for a 300ms pause, skip duplicate terms, then
     // switchMap to the latest server request — cancelling any in-flight one.
     this.searchControl.valueChanges
@@ -52,10 +61,22 @@ export class ApplicationsComponent {
     this.appService.setSort(value);
   }
 
-  // Confirms, then asks the service to remove the application.
+  // Opens the confirmation box for the chosen application.
   onDelete(id: number): void {
-    if (confirm('Delete this application?')) {
+    this.pendingDeleteId.set(id);
+  }
+
+  // Deletes after the user confirms, then closes the box.
+  confirmDelete(): void {
+    const id = this.pendingDeleteId();
+    if (id !== null) {
       this.appService.deleteApplication(id).subscribe();
     }
+    this.pendingDeleteId.set(null);
+  }
+
+  // Closes the box without deleting.
+  cancelDelete(): void {
+    this.pendingDeleteId.set(null);
   }
 }
