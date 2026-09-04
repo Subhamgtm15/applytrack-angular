@@ -3,7 +3,7 @@
   <p class="text-slate-500">Here's how your job hunt is going.</p>
 </div>
 
-<div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-5">
+<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
   <app-stat-card
     title="Total Applied"
     [value]="appService.stats().total"
@@ -163,7 +163,7 @@
 
 <!-- CTA banner -->
 <div
-  class="mt-6 flex items-center justify-between gap-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-5"
+  class="mt-6 flex flex-col items-start gap-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-5 sm:flex-row sm:items-center sm:justify-between"
 >
   <div>
     <h3 class="font-semibold text-slate-900">Ready to track a new application?</h3>

@@ -1,18 +1,37 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
-import { LucideLogOut } from '@lucide/angular';
+import { LucideLogOut, LucideMenu, LucideX } from '@lucide/angular';
 import { AuthService } from '../services/auth.service';
 import { ApplicationService } from '../services/application.service';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideLogOut],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, LucideLogOut, LucideMenu, LucideX],
   template: `
     <div class="flex h-screen overflow-hidden bg-slate-50 text-slate-900">
-      <!-- Sidebar: outside the outlet, so it stays put while pages swap -->
-      <aside class="flex w-60 flex-col border-r border-slate-200 bg-white">
-        <div class="flex h-16 items-center border-b border-slate-200 px-6 text-lg font-bold">
+      <!-- Mobile drawer backdrop: only rendered while open, hidden on desktop -->
+      @if (sidebarOpen()) {
+        <div class="fixed inset-0 z-30 bg-slate-900/40 lg:hidden" (click)="closeSidebar()"></div>
+      }
+
+      <!-- Sidebar: a fixed slide-in drawer on mobile, a static column on desktop.
+           It sits off-screen (-translate-x-full) until sidebarOpen() flips it in. -->
+      <aside
+        class="fixed inset-y-0 left-0 z-40 flex w-60 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0"
+        [class.-translate-x-full]="!sidebarOpen()"
+      >
+        <div
+          class="flex h-16 items-center justify-between border-b border-slate-200 px-6 text-lg font-bold"
+        >
           ApplyTrack
+          <button
+            type="button"
+            (click)="closeSidebar()"
+            class="cursor-pointer rounded-lg p-1 text-slate-500 hover:bg-slate-100 lg:hidden"
+            aria-label="Close menu"
+          >
+            <svg lucideX class="h-5 w-5"></svg>
+          </button>
         </div>
         <nav class="space-y-1 p-3">
           @for (item of navItems; track item.path) {
@@ -20,6 +39,7 @@ import { ApplicationService } from '../services/application.service';
               [routerLink]="item.path"
               routerLinkActive="bg-indigo-50 text-indigo-600 font-medium"
               [routerLinkActiveOptions]="{ exact: item.exact }"
+              (click)="closeSidebar()"
               class="block rounded-lg px-4 py-2 text-sm text-slate-600 transition-colors hover:bg-slate-100"
             >
               {{ item.label }}
@@ -51,10 +71,28 @@ import { ApplicationService } from '../services/application.service';
         </div>
       </aside>
 
-      <!-- Main content: child routes render here and swap on navigation -->
-      <main class="flex-1 overflow-y-auto p-6">
-        <router-outlet />
-      </main>
+      <!-- Right column: mobile top bar + scrollable content -->
+      <div class="flex flex-1 flex-col overflow-hidden">
+        <!-- Mobile top bar with hamburger; desktop hides it (sidebar is always visible there) -->
+        <header
+          class="flex h-16 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 lg:hidden"
+        >
+          <button
+            type="button"
+            (click)="toggleSidebar()"
+            class="cursor-pointer rounded-lg p-1.5 text-slate-600 hover:bg-slate-100"
+            aria-label="Open menu"
+          >
+            <svg lucideMenu class="h-6 w-6"></svg>
+          </button>
+          <span class="text-lg font-bold">ApplyTrack</span>
+        </header>
+
+        <!-- Main content: child routes render here and swap on navigation -->
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6">
+          <router-outlet />
+        </main>
+      </div>
     </div>
   `,
 })
@@ -66,6 +104,10 @@ export class MainLayoutComponent implements OnInit {
   readonly user = this.auth.user;
   readonly initial = computed(() => (this.user()?.fullName?.[0] ?? '?').toUpperCase());
 
+  // Mobile drawer state. On desktop the sidebar is always visible, so this only
+  // has a visible effect below the lg breakpoint. (signal = React useState)
+  readonly sidebarOpen = signal(false);
+
   // exact:true only for the home link ('/' is a prefix of every route).
   navItems = [
     { path: '/', label: 'Dashboard', exact: true },
@@ -73,6 +115,14 @@ export class MainLayoutComponent implements OnInit {
     { path: '/addapplication', label: 'Add Application', exact: false },
     { path: '/settings', label: 'Settings', exact: false },
   ];
+
+  toggleSidebar(): void {
+    this.sidebarOpen.update((open) => !open);
+  }
+
+  closeSidebar(): void {
+    this.sidebarOpen.set(false);
+  }
 
   // Load the signed-in user's applications once we're inside the authenticated shell.
   ngOnInit(): void {
